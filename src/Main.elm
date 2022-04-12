@@ -22,6 +22,8 @@ type alias Book =
     { title : String
     , thumbnail : Maybe String
     , link : String
+    , pages : Maybe Int
+    , publisher : Maybe String
     }
 
 
@@ -142,16 +144,32 @@ viewResults model =
 
 viewBook : Book -> E.Element msg
 viewBook book =
-    E.column []
-        [ E.text book.title
-        , E.text book.link
-        , case book.thumbnail of
-            Just thumbnail ->
-                viewBookCover thumbnail book.title
+    E.newTabLink []
+        { url = book.link
+        , label =
+            E.column
+                []
+                [ E.text book.title
+                , case book.thumbnail of
+                    Just thumbnail ->
+                        viewBookCover thumbnail book.title
 
-            Nothing ->
-                E.none
-        ]
+                    Nothing ->
+                        E.none
+                , case book.pages of
+                    Just pages ->
+                        E.text (String.fromInt pages)
+
+                    Nothing ->
+                        E.none
+                , case book.publisher of
+                    Just publisher ->
+                        E.text publisher
+
+                    Nothing ->
+                        E.none
+                ]
+        }
 
 
 viewBookCover : String -> String -> E.Element msg
@@ -199,10 +217,12 @@ decodeItem =
 
 
 decodeVolumeInfo =
-    JD.map3 Book
+    JD.map5 Book
         (JD.field "title" JD.string)
         (JD.maybe (JD.field "imageLinks" decodeImageLinks))
         (JD.field "canonicalVolumeLink" JD.string)
+        (JD.maybe (JD.field "pageCount" JD.int))
+        (JD.maybe (JD.field "publisher" JD.string))
 
 
 decodeImageLinks =

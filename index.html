@@ -10737,9 +10737,9 @@ var $author$project$Main$subscriptions = function (_v0) {
 var $author$project$Main$MsgGotResults = function (a) {
 	return {$: 'MsgGotResults', a: a};
 };
-var $author$project$Main$Book = F3(
-	function (title, thumbnail, link) {
-		return {link: link, thumbnail: thumbnail, title: title};
+var $author$project$Main$Book = F5(
+	function (title, thumbnail, link, pages, publisher) {
+		return {link: link, pages: pages, publisher: publisher, thumbnail: thumbnail, title: title};
 	});
 var $author$project$Main$decodeImageLinks = A2($elm$json$Json$Decode$field, 'thumbnail', $elm$json$Json$Decode$string);
 var $elm$json$Json$Decode$oneOf = _Json_oneOf;
@@ -10751,13 +10751,17 @@ var $elm$json$Json$Decode$maybe = function (decoder) {
 				$elm$json$Json$Decode$succeed($elm$core$Maybe$Nothing)
 			]));
 };
-var $author$project$Main$decodeVolumeInfo = A4(
-	$elm$json$Json$Decode$map3,
+var $author$project$Main$decodeVolumeInfo = A6(
+	$elm$json$Json$Decode$map5,
 	$author$project$Main$Book,
 	A2($elm$json$Json$Decode$field, 'title', $elm$json$Json$Decode$string),
 	$elm$json$Json$Decode$maybe(
 		A2($elm$json$Json$Decode$field, 'imageLinks', $author$project$Main$decodeImageLinks)),
-	A2($elm$json$Json$Decode$field, 'canonicalVolumeLink', $elm$json$Json$Decode$string));
+	A2($elm$json$Json$Decode$field, 'canonicalVolumeLink', $elm$json$Json$Decode$string),
+	$elm$json$Json$Decode$maybe(
+		A2($elm$json$Json$Decode$field, 'pageCount', $elm$json$Json$Decode$int)),
+	$elm$json$Json$Decode$maybe(
+		A2($elm$json$Json$Decode$field, 'publisher', $elm$json$Json$Decode$string)));
 var $author$project$Main$decodeItem = A2($elm$json$Json$Decode$field, 'volumeInfo', $author$project$Main$decodeVolumeInfo);
 var $author$project$Main$decodeItems = $elm$json$Json$Decode$list($author$project$Main$decodeItem);
 var $author$project$Main$decodeJson = A2($elm$json$Json$Decode$field, 'items', $author$project$Main$decodeItems);
@@ -16775,6 +16779,42 @@ var $author$project$Main$viewErrorMessage = function (model) {
 		return $mdgriffith$elm_ui$Element$none;
 	}
 };
+var $elm$html$Html$Attributes$rel = _VirtualDom_attribute('rel');
+var $elm$html$Html$Attributes$target = $elm$html$Html$Attributes$stringProperty('target');
+var $mdgriffith$elm_ui$Element$newTabLink = F2(
+	function (attrs, _v0) {
+		var url = _v0.url;
+		var label = _v0.label;
+		return A4(
+			$mdgriffith$elm_ui$Internal$Model$element,
+			$mdgriffith$elm_ui$Internal$Model$asEl,
+			$mdgriffith$elm_ui$Internal$Model$NodeName('a'),
+			A2(
+				$elm$core$List$cons,
+				$mdgriffith$elm_ui$Internal$Model$Attr(
+					$elm$html$Html$Attributes$href(url)),
+				A2(
+					$elm$core$List$cons,
+					$mdgriffith$elm_ui$Internal$Model$Attr(
+						$elm$html$Html$Attributes$rel('noopener noreferrer')),
+					A2(
+						$elm$core$List$cons,
+						$mdgriffith$elm_ui$Internal$Model$Attr(
+							$elm$html$Html$Attributes$target('_blank')),
+						A2(
+							$elm$core$List$cons,
+							$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$shrink),
+							A2(
+								$elm$core$List$cons,
+								$mdgriffith$elm_ui$Element$height($mdgriffith$elm_ui$Element$shrink),
+								A2(
+									$elm$core$List$cons,
+									$mdgriffith$elm_ui$Internal$Model$htmlClass($mdgriffith$elm_ui$Internal$Style$classes.contentCenterX + (' ' + ($mdgriffith$elm_ui$Internal$Style$classes.contentCenterY + (' ' + $mdgriffith$elm_ui$Internal$Style$classes.link)))),
+									attrs)))))),
+			$mdgriffith$elm_ui$Internal$Model$Unkeyed(
+				_List_fromArray(
+					[label])));
+	});
 var $elm$html$Html$Attributes$alt = $elm$html$Html$Attributes$stringProperty('alt');
 var $elm$html$Html$Attributes$src = function (url) {
 	return A2(
@@ -16835,22 +16875,46 @@ var $author$project$Main$viewBookCover = F2(
 	});
 var $author$project$Main$viewBook = function (book) {
 	return A2(
-		$mdgriffith$elm_ui$Element$column,
+		$mdgriffith$elm_ui$Element$newTabLink,
 		_List_Nil,
-		_List_fromArray(
-			[
-				$mdgriffith$elm_ui$Element$text(book.title),
-				$mdgriffith$elm_ui$Element$text(book.link),
-				function () {
-				var _v0 = book.thumbnail;
-				if (_v0.$ === 'Just') {
-					var thumbnail = _v0.a;
-					return A2($author$project$Main$viewBookCover, thumbnail, book.title);
-				} else {
-					return $mdgriffith$elm_ui$Element$none;
-				}
-			}()
-			]));
+		{
+			label: A2(
+				$mdgriffith$elm_ui$Element$column,
+				_List_Nil,
+				_List_fromArray(
+					[
+						$mdgriffith$elm_ui$Element$text(book.title),
+						function () {
+						var _v0 = book.thumbnail;
+						if (_v0.$ === 'Just') {
+							var thumbnail = _v0.a;
+							return A2($author$project$Main$viewBookCover, thumbnail, book.title);
+						} else {
+							return $mdgriffith$elm_ui$Element$none;
+						}
+					}(),
+						function () {
+						var _v1 = book.pages;
+						if (_v1.$ === 'Just') {
+							var pages = _v1.a;
+							return $mdgriffith$elm_ui$Element$text(
+								$elm$core$String$fromInt(pages));
+						} else {
+							return $mdgriffith$elm_ui$Element$none;
+						}
+					}(),
+						function () {
+						var _v2 = book.publisher;
+						if (_v2.$ === 'Just') {
+							var publisher = _v2.a;
+							return $mdgriffith$elm_ui$Element$text(publisher);
+						} else {
+							return $mdgriffith$elm_ui$Element$none;
+						}
+					}()
+					])),
+			url: book.link
+		});
 };
 var $author$project$Main$viewResults = function (model) {
 	return A2(
@@ -18220,7 +18284,7 @@ var $author$project$Main$view = function (model) {
 var $author$project$Main$main = $elm$browser$Browser$element(
 	{init: $author$project$Main$init, subscriptions: $author$project$Main$subscriptions, update: $author$project$Main$update, view: $author$project$Main$view});
 _Platform_export({'Main':{'init':$author$project$Main$main(
-	$elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Main.Book":{"args":[],"type":"{ title : String.String, thumbnail : Maybe.Maybe String.String, link : String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"MsgSearch":[],"MsgGotResults":["Result.Result Http.Error (List.List Main.Book)"],"MsgInputTextField":["String.String"]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}}}}})}});}(this));
+	$elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Main.Book":{"args":[],"type":"{ title : String.String, thumbnail : Maybe.Maybe String.String, link : String.String, pages : Maybe.Maybe Basics.Int, publisher : Maybe.Maybe String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"MsgSearch":[],"MsgGotResults":["Result.Result Http.Error (List.List Main.Book)"],"MsgInputTextField":["String.String"]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}}}}})}});}(this));
 
   var app = Elm.Main.init({ node: document.getElementById("elm") });
 }
