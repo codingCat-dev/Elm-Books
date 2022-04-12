@@ -16775,31 +16775,88 @@ var $author$project$Main$viewErrorMessage = function (model) {
 		return $mdgriffith$elm_ui$Element$none;
 	}
 };
-var $elm$core$List$head = function (list) {
-	if (list.b) {
-		var x = list.a;
-		var xs = list.b;
-		return $elm$core$Maybe$Just(x);
-	} else {
-		return $elm$core$Maybe$Nothing;
-	}
+var $elm$html$Html$Attributes$alt = $elm$html$Html$Attributes$stringProperty('alt');
+var $elm$html$Html$Attributes$src = function (url) {
+	return A2(
+		$elm$html$Html$Attributes$stringProperty,
+		'src',
+		_VirtualDom_noJavaScriptOrHtmlUri(url));
 };
-var $author$project$Main$viewResults = function (model) {
+var $mdgriffith$elm_ui$Element$image = F2(
+	function (attrs, _v0) {
+		var src = _v0.src;
+		var description = _v0.description;
+		var imageAttributes = A2(
+			$elm$core$List$filter,
+			function (a) {
+				switch (a.$) {
+					case 'Width':
+						return true;
+					case 'Height':
+						return true;
+					default:
+						return false;
+				}
+			},
+			attrs);
+		return A4(
+			$mdgriffith$elm_ui$Internal$Model$element,
+			$mdgriffith$elm_ui$Internal$Model$asEl,
+			$mdgriffith$elm_ui$Internal$Model$div,
+			A2(
+				$elm$core$List$cons,
+				$mdgriffith$elm_ui$Internal$Model$htmlClass($mdgriffith$elm_ui$Internal$Style$classes.imageContainer),
+				attrs),
+			$mdgriffith$elm_ui$Internal$Model$Unkeyed(
+				_List_fromArray(
+					[
+						A4(
+						$mdgriffith$elm_ui$Internal$Model$element,
+						$mdgriffith$elm_ui$Internal$Model$asEl,
+						$mdgriffith$elm_ui$Internal$Model$NodeName('img'),
+						_Utils_ap(
+							_List_fromArray(
+								[
+									$mdgriffith$elm_ui$Internal$Model$Attr(
+									$elm$html$Html$Attributes$src(src)),
+									$mdgriffith$elm_ui$Internal$Model$Attr(
+									$elm$html$Html$Attributes$alt(description))
+								]),
+							imageAttributes),
+						$mdgriffith$elm_ui$Internal$Model$Unkeyed(_List_Nil))
+					])));
+	});
+var $author$project$Main$viewBookCover = F2(
+	function (thumbnail, title) {
+		return A2(
+			$mdgriffith$elm_ui$Element$image,
+			_List_Nil,
+			{description: title, src: thumbnail});
+	});
+var $author$project$Main$viewBook = function (book) {
 	return A2(
 		$mdgriffith$elm_ui$Element$column,
 		_List_Nil,
 		_List_fromArray(
 			[
+				$mdgriffith$elm_ui$Element$text(book.title),
+				$mdgriffith$elm_ui$Element$text(book.link),
 				function () {
-				var _v0 = $elm$core$List$head(model.results);
+				var _v0 = book.thumbnail;
 				if (_v0.$ === 'Just') {
-					var firstItem = _v0.a;
-					return $mdgriffith$elm_ui$Element$text(firstItem.title);
+					var thumbnail = _v0.a;
+					return A2($author$project$Main$viewBookCover, thumbnail, book.title);
 				} else {
-					return $mdgriffith$elm_ui$Element$text('Empty');
+					return $mdgriffith$elm_ui$Element$none;
 				}
 			}()
 			]));
+};
+var $author$project$Main$viewResults = function (model) {
+	return A2(
+		$mdgriffith$elm_ui$Element$column,
+		_List_Nil,
+		A2($elm$core$List$map, $author$project$Main$viewBook, model.results));
 };
 var $author$project$Main$MsgInputTextField = function (a) {
 	return {$: 'MsgInputTextField', a: a};
@@ -17121,6 +17178,15 @@ var $mdgriffith$elm_ui$Element$Input$hasFocusStyle = function (attr) {
 		return true;
 	} else {
 		return false;
+	}
+};
+var $elm$core$List$head = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return $elm$core$Maybe$Just(x);
+	} else {
+		return $elm$core$Maybe$Nothing;
 	}
 };
 var $mdgriffith$elm_ui$Internal$Model$Label = function (a) {
