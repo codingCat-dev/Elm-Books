@@ -50,12 +50,12 @@ main =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( initModel, Cmd.none )
+    ( initModel, cmdSearch initModel )
 
 
 initModel : Model
 initModel =
-    { searchText = ""
+    { searchText = "Elm language"
     , results = []
     , errorMessage = Nothing
     , loading = False
@@ -74,11 +74,11 @@ update msg model =
             ( { model | searchText = newTextInput }, Cmd.none )
 
         MsgSearch ->
-            ( { model | loading = True }, cmdSearch model )
+            updateStartSearch model
 
         MsgKeyPressed key ->
             if key == "Enter" then
-                ( { model | loading = True }, cmdSearch model )
+                updateStartSearch model
 
             else
                 ( model, Cmd.none )
@@ -114,8 +114,9 @@ update msg model =
                     ( { newModel | errorMessage = Just errorMessage }, Cmd.none )
 
 
-
---interact with browser-client,
+updateStartSearch : Model -> ( Model, Cmd Msg )
+updateStartSearch model =
+    ( { model | loading = True }, cmdSearch model )
 
 
 subscriptions : model -> Sub Msg
@@ -133,19 +134,24 @@ viewLayout model =
     E.layoutWith
         { options =
             [ E.focusStyle
-                { borderColor = Nothing
+                { borderColor = Just (E.rgb255 0x00 0x33 0x66)
                 , backgroundColor = Nothing
                 , shadow = Nothing
                 }
             ]
         }
         []
-        (E.column [] [ viewSearchBar model, viewErrorMessage model, viewResults model ])
+        (E.column [ E.padding 20 ]
+            [ viewSearchBar model
+            , viewErrorMessage model
+            , viewResults model
+            ]
+        )
 
 
 viewSearchBar : Model -> E.Element Msg
 viewSearchBar model =
-    E.row []
+    E.row [ E.spacing 10, E.paddingXY 0 12 ]
         [ EI.search []
             { onChange = MsgInputTextField
             , text = model.searchText
@@ -164,8 +170,8 @@ viewSearchBar model =
 loadingImage : Html.Html msg
 loadingImage =
     S.svg
-        [ SA.width "48px"
-        , SA.height "48px"
+        [ SA.width "64px"
+        , SA.height "64px"
         , SA.viewBox "0 0 48 48"
         ]
         [ S.circle
@@ -178,7 +184,7 @@ loadingImage =
             ]
             [ S.animate
                 [ SA.attributeName "opacity"
-                , SA.values "0;.9;0"
+                , SA.values "0;.8;0"
                 , SA.dur "2s"
                 , SA.repeatCount "indefinite"
                 ]
@@ -199,36 +205,64 @@ viewErrorMessage model =
 
 viewResults : Model -> E.Element msg
 viewResults model =
-    E.column []
+    E.wrappedRow [ E.spacing 5, E.centerX ]
         (List.map viewBook model.results)
 
 
 viewBook : Book -> E.Element msg
 viewBook book =
-    E.newTabLink []
+    let
+        titleE =
+            E.paragraph [ EF.bold, EF.underline, E.paddingXY 0 12 ] [ E.text book.title ]
+
+        thumbnailE =
+            case book.thumbnail of
+                Just thumbnail ->
+                    viewBookCover thumbnail book.title
+
+                Nothing ->
+                    E.none
+
+        pagesE =
+            case book.pages of
+                Just pages ->
+                    E.paragraph [ EF.size 12 ]
+                        [ E.text ("(" ++ String.fromInt pages ++ " pages)") ]
+
+                Nothing ->
+                    E.none
+
+        publisherE =
+            case book.publisher of
+                Just publisher ->
+                    E.paragraph [ EF.size 16 ]
+                        [ E.text publisher ]
+
+                Nothing ->
+                    E.none
+    in
+    E.newTabLink
+        [ E.width (E.px 360)
+        , E.height (E.px 300)
+        , EBG.color (E.rgb255 0xE3 0xEA 0xED)
+        , EB.rounded 20
+        , E.padding 10
+        , E.mouseOver
+            [ EBG.color (E.rgb255 0x33 0x66 0x99)
+            ]
+        , E.focused
+            [ EBG.color (E.rgb255 0x33 0x66 0x99)
+            ]
+        ]
         { url = book.link
         , label =
-            E.column
-                []
-                [ E.text book.title
-                , case book.thumbnail of
-                    Just thumbnail ->
-                        viewBookCover thumbnail book.title
-
-                    Nothing ->
-                        E.none
-                , case book.pages of
-                    Just pages ->
-                        E.text (String.fromInt pages)
-
-                    Nothing ->
-                        E.none
-                , case book.publisher of
-                    Just publisher ->
-                        E.text publisher
-
-                    Nothing ->
-                        E.none
+            E.row [ E.centerX ]
+                [ thumbnailE
+                , E.column [ E.padding 20 ]
+                    [ titleE
+                    , publisherE
+                    , pagesE
+                    ]
                 ]
         }
 
@@ -249,6 +283,10 @@ viewSearchButton =
         , EB.rounded 5
         , E.padding 12
         , E.mouseOver
+            [ EBG.color (E.rgb255 0x33 0x66 0x99)
+            , EF.color (E.rgb255 0xDD 0xDD 0xDD)
+            ]
+        , E.focused
             [ EBG.color (E.rgb255 0x33 0x66 0x99)
             , EF.color (E.rgb255 0xDD 0xDD 0xDD)
             ]
