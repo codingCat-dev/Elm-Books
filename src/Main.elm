@@ -1,6 +1,7 @@
 module Main exposing (..)
 
 import Browser
+import Browser.Events
 import Element as E
 import Element.Background as EBG
 import Element.Border as EB
@@ -9,12 +10,15 @@ import Element.Input as EI
 import Html
 import Http exposing (Error(..))
 import Json.Decode as JD
+import Svg as S
+import Svg.Attributes as SA
 
 
 type alias Model =
     { searchText : String
     , results : List Book
     , errorMessage : Maybe String
+    , loading : Bool
     }
 
 
@@ -31,6 +35,7 @@ type Msg
     = MsgSearch
     | MsgGotResults (Result Http.Error (List Book))
     | MsgInputTextField String
+    | MsgKeyPressed String
 
 
 main : Program () Model Msg
@@ -53,6 +58,7 @@ initModel =
     { searchText = ""
     , results = []
     , errorMessage = Nothing
+    , loading = False
     }
 
 
@@ -68,34 +74,58 @@ update msg model =
             ( { model | searchText = newTextInput }, Cmd.none )
 
         MsgSearch ->
-            ( model, cmdSearch model )
+            ( { model | loading = True }, cmdSearch model )
+
+        MsgKeyPressed key ->
+            if key == "Enter" then
+                ( { model | loading = True }, cmdSearch model )
+
+            else
+                ( model, Cmd.none )
 
         MsgGotResults result ->
+            let
+                newModel =
+                    { model | loading = False }
+            in
             case result of
                 Ok data ->
-                    ( { model | results = data, errorMessage = Nothing }, Cmd.none )
+                    ( { newModel | results = data, errorMessage = Nothing }, Cmd.none )
 
                 Err error ->
-                    case error of
-                        NetworkError ->
-                            ( { model | errorMessage = Just "Network Error" }, Cmd.none )
+                    let
+                        errorMessage =
+                            case error of
+                                NetworkError ->
+                                    "Network Error"
 
-                        BadUrl _ ->
-                            ( { model | errorMessage = Just "Bad URL" }, Cmd.none )
+                                BadUrl _ ->
+                                    "Bad URL"
 
-                        Timeout ->
-                            ( { model | errorMessage = Just "Timeout" }, Cmd.none )
+                                Timeout ->
+                                    "Timeout"
 
-                        BadStatus _ ->
-                            ( { model | errorMessage = Just "Bad status" }, Cmd.none )
+                                BadStatus _ ->
+                                    "Bad status"
 
-                        BadBody reason ->
-                            ( { model | errorMessage = Just reason }, Cmd.none )
+                                BadBody reason ->
+                                    reason
+                    in
+                    ( { newModel | errorMessage = Just errorMessage }, Cmd.none )
 
 
-subscriptions : model -> Sub msg
+
+--interact with browser-client,
+
+
+subscriptions : model -> Sub Msg
 subscriptions _ =
-    Sub.none
+    Browser.Events.onKeyPress keyPressed
+
+
+keyPressed : JD.Decoder Msg
+keyPressed =
+    JD.map MsgKeyPressed (JD.field "key" JD.string)
 
 
 viewLayout : Model -> Html.Html Msg
@@ -123,6 +153,37 @@ viewSearchBar model =
             , label = EI.labelLeft [] (E.text "Search books:")
             }
         , viewSearchButton
+        , if model.loading then
+            E.html loadingImage
+
+          else
+            E.none
+        ]
+
+
+loadingImage : Html.Html msg
+loadingImage =
+    S.svg
+        [ SA.width "48px"
+        , SA.height "48px"
+        , SA.viewBox "0 0 48 48"
+        ]
+        [ S.circle
+            [ SA.cx "24"
+            , SA.cy "24"
+            , SA.stroke "#6699AA"
+            , SA.strokeWidth "4"
+            , SA.r "8"
+            , SA.fill "none"
+            ]
+            [ S.animate
+                [ SA.attributeName "opacity"
+                , SA.values "0;.9;0"
+                , SA.dur "2s"
+                , SA.repeatCount "indefinite"
+                ]
+                []
+            ]
         ]
 
 
@@ -197,6 +258,7 @@ viewSearchButton =
         }
 
 
+cmdSearch : Model -> Cmd Msg
 cmdSearch model =
     Http.get
         { url = "https://www.googleapis.com/books/v1/volumes?q=" ++ model.searchText
@@ -204,18 +266,22 @@ cmdSearch model =
         }
 
 
+decodeJson : JD.Decoder (List Book)
 decodeJson =
     JD.field "items" decodeItems
 
 
+decodeItems : JD.Decoder (List Book)
 decodeItems =
     JD.list decodeItem
 
 
+decodeItem : JD.Decoder Book
 decodeItem =
     JD.field "volumeInfo" decodeVolumeInfo
 
 
+decodeVolumeInfo : JD.Decoder Book
 decodeVolumeInfo =
     JD.map5 Book
         (JD.field "title" JD.string)
@@ -225,5 +291,6 @@ decodeVolumeInfo =
         (JD.maybe (JD.field "publisher" JD.string))
 
 
+decodeImageLinks : JD.Decoder String
 decodeImageLinks =
     JD.field "thumbnail" JD.string
